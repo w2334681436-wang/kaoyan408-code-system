@@ -1,0 +1,13 @@
+{
+  "name": "kaoyan408-code-question-system",
+  "version": "4.0.0",
+  "private": true,
+  "type": "module",
+  "description": "考研408代码题系统：多模块纯前端 PWA，适合 GitHub + Vercel 部署。",
+  "scripts": {
+    "dev": "npx http-server -c-1 .",
+    "check": "node scripts/check.mjs"
+  },
+  "keywords": ["408", "kaoyan", "code-editor", "pwa", "indexeddb"],
+  "license": "MIT"
+}

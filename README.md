@@ -1,63 +1,93 @@
-# 11408 考研笔记框架系统
+# 考研 408 代码题系统
 
-这是从你上传的单文件 HTML 拆分出来的 GitHub 多文件项目版本，原始文件包含完整的页面结构、CSS 和主脚本。拆分后的入口是 `index.html`，样式在 `styles/app.css`，主逻辑在 `src/app.js`。
+这是一个多模块纯前端 PWA 应用，适合上传 GitHub 后用 Vercel 部署，也可以在 Chrome 中安装为本地应用。
 
 ## 功能
 
-- 科目切换：高数、线代、概率论、数据结构、计算机组成原理、操作系统、计算机网络、英语、政治
-- 章节 / 节 / 子节目录管理
-- Markdown 编辑与预览
-- 公式渲染：`$...$`、`$$...$$`、`\(...\)`、`\[...\]`
-- 图片短标签：`[[图片:img_xxx]]`
-- 图片资源随 JSON 导入导出
-- HTML 代码编辑与居中弹窗渲染
-- 思维框架视图
-- IndexedDB 本地保存
-- JSON 完整导入导出
-- PWA 基础支持：`manifest.json` + `service-worker.js`
+- 主页题库列表
+- 新建、编辑、删除、搜索、筛选题目
+- 题目图片导入、拖拽导入、粘贴截图导入
+- 题目图片预览页自动大图展示
+- 多方法代码管理
+- 方法备注
+- 每个方法可添加 HTML 动画演示
+- 预览页默认只显示题目和代码，备注/动画放在按钮里
+- Monaco Editor 代码编辑器，联网时接近 VSCode 体验
+- Monaco 加载失败时自动降级为内置编辑器
+- IndexedDB 本地大容量浏览器存储
+- 题库 JSON 导入/导出
+- PWA manifest + service worker，可用 Chrome 安装
+
+## 目录结构
+
+```text
+.
+├── index.html
+├── package.json
+├── vercel.json
+├── sw.js
+├── public/
+│   ├── manifest.webmanifest
+│   └── icons/
+├── src/
+│   ├── main.js
+│   ├── db.js
+│   ├── models.js
+│   ├── state.js
+│   ├── utils.js
+│   ├── components/
+│   │   ├── codeEditor.js
+│   │   ├── highlight.js
+│   │   ├── modal.js
+│   │   └── toast.js
+│   ├── views/
+│   │   ├── shell.js
+│   │   ├── homeView.js
+│   │   ├── editorView.js
+│   │   └── previewView.js
+│   └── styles/
+│       ├── base.css
+│       ├── layout.css
+│       ├── editor.css
+│       ├── preview.css
+│       └── responsive.css
+└── scripts/
+    └── check.mjs
+```
 
 ## 本地运行
 
-不要直接双击 `index.html` 作为长期运行方式。推荐用本地静态服务器：
+最简单方式：直接用 VSCode Live Server 或任意静态服务器打开根目录。
+
+也可以运行：
 
 ```bash
-python -m http.server 5173
+npm run dev
 ```
 
-然后浏览器打开：
+如果没有安装依赖，`npx` 会自动拉取一个临时静态服务器。
 
-```text
-http://localhost:5173
-```
+## 上传 GitHub + Vercel
 
-## 上传 GitHub
+1. 解压 zip。
+2. 将整个文件夹上传到 GitHub 仓库。
+3. Vercel 新建项目，导入该仓库。
+4. Framework Preset 选 `Other`。
+5. Build Command 留空。
+6. Output Directory 留空或填 `.`。
+7. 部署完成后，用 Chrome 打开 Vercel 链接。
+8. 地址栏右侧出现安装图标后，点击安装为本地应用。
 
-```bash
-git init
-git add .
-git commit -m "init 11408 notes app"
-git branch -M main
-git remote add origin https://github.com/你的用户名/你的仓库名.git
-git push -u origin main
-```
+## 数据保存说明
 
-## GitHub Pages 部署
+题目、图片、代码、备注、动画 HTML 默认保存在浏览器 IndexedDB 中。换浏览器、清缓存、换设备前，请先点击“导出题库”备份 JSON。
 
-在 GitHub 仓库中：
+## 维护建议
 
-1. Settings
-2. Pages
-3. Source 选择 `Deploy from a branch`
-4. Branch 选择 `main`
-5. Folder 选择 `/root`
-6. Save
-
-稍等后即可通过 GitHub Pages 链接访问。
-
-## 重要说明
-
-- 你的笔记数据保存在浏览器 IndexedDB 中，不会自动上传 GitHub。
-- 换设备时需要在旧设备点击“导出”，在新设备点击“导入”。
-- 通过应用插入的图片会进入 JSON 备份，不需要另外传图。
-- 如果你在 Markdown 或 HTML 中手写外链图片，JSON 只保存链接，不会保存外链图片本体。
-- MathJax 目前通过 CDN 加载，首次公式渲染需要联网。
+- 改编辑器功能：`src/components/codeEditor.js`
+- 改题库数据结构：`src/models.js`
+- 改本地存储：`src/db.js`
+- 改主页：`src/views/homeView.js`
+- 改编写页：`src/views/editorView.js`
+- 改预览页：`src/views/previewView.js`
+- 改样式：`src/styles/`
