@@ -5,6 +5,7 @@ import { highlightCode } from "./highlight.js";
 export function renderPreview(container, problem) {
   const method = getActiveMethod(problem);
   const hasQuestionText = Boolean((problem.questionText || "").trim());
+
   container.innerHTML = `
     <main class="main">
       <div class="preview-wrap full-target" id="previewFullTarget">
@@ -48,8 +49,9 @@ export function renderPreview(container, problem) {
 
 export function methodBlock(method) {
   const cleanCode = stripHighlightMarkup(method.code || "");
+
   return `
-    <div class="code-preview">
+    <div class="code-preview" data-clean-preview="true">
       <div class="code-preview-head">
         <span id="previewCodeTitle">${escapeHtml(method.name || "代码")}</span>
         <span id="previewCodeInfo">${escapeHtml(method.language || "cpp")} · ${cleanCode.split("\n").length} 行</span>
@@ -63,6 +65,7 @@ export function updatePreviewMethod(problem) {
   const method = getActiveMethod(problem);
   const old = document.querySelector(".code-preview");
   if (old) old.outerHTML = methodBlock(method);
+
   const note = document.querySelector("#notePreview");
   if (note) {
     note.textContent = method.note || "暂无备注。";

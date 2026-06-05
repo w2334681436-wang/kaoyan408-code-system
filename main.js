@@ -456,6 +456,36 @@ async function importFile(file) {
   toast(`已导入 ${count} 道题`);
 }
 
+
+async function repairAllDirtyCodes() {
+  const list = await getAllProblems();
+  let changed = 0;
+
+  for (const problem of list) {
+    let dirty = false;
+    normalizeProblem(problem);
+
+    for (const method of problem.methods || []) {
+      const before = String(method.code || "");
+      const after = stripHighlightMarkup(before);
+      if (before !== after) {
+        method.code = after;
+        dirty = true;
+      }
+    }
+
+    if (dirty) {
+      problem.updatedAt = now();
+      await saveProblem(problem);
+      changed++;
+    }
+  }
+
+  if (changed > 0) {
+    toast(`已自动修复 ${changed} 道题的代码预览乱码`);
+  }
+}
+
 function bindGlobalModals() {
   const closeImageButton = $("#closeImageModal");
   if (closeImageButton) closeImageButton.onclick = closeImage;
@@ -486,6 +516,7 @@ async function start() {
   shell(`<main class="main"><p class="muted">正在加载...</p></main>`);
   bindGlobalModals();
   await initDB();
+  await repairAllDirtyCodes();
 
   if ("serviceWorker" in navigator) {
     try {

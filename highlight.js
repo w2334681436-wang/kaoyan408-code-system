@@ -3,17 +3,20 @@ import { escapeHtml, stripHighlightMarkup } from "./utils.js";
 export function highlightCode(code, lang = "cpp") {
   const clean = stripHighlightMarkup(code);
   const placeholders = [];
+
   const stash = (className, text) => {
-    const key = `@@PLACEHOLDER_${placeholders.length}@@`;
+    const key = `@@KAOYAN408_PLACEHOLDER_${placeholders.length}@@`;
     placeholders.push(`<span class="${className}">${escapeHtml(text)}</span>`);
     return key;
   };
 
   let s = String(clean ?? "");
+
   s = s.replace(/\/\*[\s\S]*?\*\//g, m => stash("tok-comment", m));
   s = s.replace(/\/\/.*$/gm, m => stash("tok-comment", m));
   if (["python", "py"].includes(lang)) s = s.replace(/#.*$/gm, m => stash("tok-comment", m));
   s = s.replace(/(["'`])(?:\\.|(?!\1)[\s\S])*\1/g, m => stash("tok-string", m));
+
   s = escapeHtml(s);
 
   const keywords = [
@@ -37,7 +40,8 @@ export function highlightCode(code, lang = "cpp") {
   s = s.replace(/(&lt;=|&gt;=|==|!=|\+\+|--|-&gt;|&&|\|\||[+\-*\/%=<>!&|])/g, `<span class="tok-op">$1</span>`);
 
   placeholders.forEach((html, i) => {
-    s = s.replaceAll(`@@PLACEHOLDER_${i}@@`, html);
+    s = s.replaceAll(`@@KAOYAN408_PLACEHOLDER_${i}@@`, html);
   });
+
   return s || "";
 }

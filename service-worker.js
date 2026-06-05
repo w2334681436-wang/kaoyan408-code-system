@@ -1,4 +1,4 @@
-const CACHE_NAME = "kaoyan408-code-system-flat-v4";
+const CACHE_NAME = "kaoyan408-code-system-flat-v5-preview-clean";
 const CORE = [
   "./",
   "./index.html",

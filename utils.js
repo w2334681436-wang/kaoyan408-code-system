@@ -26,20 +26,36 @@ export function stripHighlightMarkup(code) {
   let s = String(code ?? "");
   if (!s) return "";
 
-  // 修复旧版本把 <span class="tok-xxx"> 当成代码保存进去的问题。
-  // 兼容两类污染：
-  // 1. <span class="tok-type">int</span>
-  // 2. &lt;span class="tok-type"&gt;int&lt;/span&gt;
-  if (s.includes("&lt;span") || s.includes("&amp;lt;span") || s.includes("<span class=\"tok-")) {
-    for (let i = 0; i < 3; i++) s = decodeHtmlEntities(s);
-    s = s.replace(/<span\s+class=["']tok-[^"']+["']\s*>/g, "");
-    s = s.replace(/<\/span>/g, "");
-    s = s.replace(/<span[^>]*>/g, "");
-    s = s.replace(/<\/span>/g, "");
-    s = decodeHtmlEntities(s);
+  const decode = value => {
+    const textarea = document.createElement("textarea");
+    textarea.innerHTML = String(value ?? "");
+    return textarea.value;
+  };
+
+  for (let round = 0; round < 6; round++) {
+    const before = s;
+
+    s = s.replace(/&lt;\s*span\b[^&]*class\s*=\s*(?:&quot;|&#34;|["'])tok-[\s\S]*?&gt;/gi, "");
+    s = s.replace(/&lt;\s*\/\s*span\s*&gt;/gi, "");
+
+    s = s.replace(/<\s*span\b[^>]*class\s*=\s*["']?tok-[^>]*>/gi, "");
+    s = s.replace(/<\s*\/\s*span\s*>/gi, "");
+
+    s = s.replace(/&lt;\s*span\b[\s\S]*?&gt;/gi, "");
+    s = s.replace(/<\s*span\b[^>]*>/gi, "");
+    s = s.replace(/&lt;\s*\/\s*span\s*&gt;/gi, "");
+    s = s.replace(/<\s*\/\s*span\s*>/gi, "");
+
+    s = decode(s);
+
+    if (s === before) break;
   }
 
-  // 清理旧高亮可能产生的 HTML 残留，但不碰正常 C/C++ 小于号。
+  s = s.replace(/<\s*span\b[^>]*>/gi, "");
+  s = s.replace(/<\s*\/\s*span\s*>/gi, "");
+  s = decode(s);
+
+  s = s.replace(/\u00a0/g, " ");
   s = s.replace(/\r\n/g, "\n");
   return s;
 }
