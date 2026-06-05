@@ -1,4 +1,4 @@
-import { uid, now } from "./utils.js";
+import { uid, now, stripHighlightMarkup } from "./utils.js";
 
 export function defaultHtmlDemo() {
   return String.raw`<!DOCTYPE html>
@@ -90,6 +90,7 @@ export function normalizeProblem(problem) {
     if (typeof m.code !== "string") m.code = "";
     if (typeof m.note !== "string") m.note = "";
     if (typeof m.htmlDemo !== "string") m.htmlDemo = "";
+    m.code = stripHighlightMarkup(m.code);
   }
   return p;
 }

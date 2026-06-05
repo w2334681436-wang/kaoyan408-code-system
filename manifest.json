@@ -2,11 +2,12 @@
   "name": "考研408代码题系统",
   "short_name": "408代码题",
   "description": "考研408代码题题库、代码编辑、题图保存、HTML动画演示",
-  "start_url": "./index.html",
+  "start_url": "./?source=pwa-v4",
   "scope": "./",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#2563eb",
+  "id": "./?app=kaoyan408-code-system-v4",
   "icons": [
     {
       "src": "./icon.svg",

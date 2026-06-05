@@ -1,10 +1,26 @@
-# 考研408代码题系统
+# 考研408代码题系统 v4
 
-这是一个适合 GitHub + Vercel 部署的扁平模块版 PWA 应用。
+这是适合 GitHub 网页上传 + Vercel 部署 + Chrome 安装为 PWA 的扁平模块版。
 
-## 目录特点
+## v4 修复
 
-本版本为了方便 GitHub 网页上传，所有核心文件都在同一级根目录：
+1. 修复 PWA 安装后从桌面/启动器直接打开失败的问题。
+   - `manifest.json` 的 `start_url` 改为 `./?source=pwa-v4`
+   - `service-worker.js` 对导航请求做网络优先 + index 回退
+   - 更新缓存版本，避免旧缓存继续污染
+
+2. 修复预览页代码显示 `<span class="tok-xxx">` 的问题。
+   - 自动清洗旧数据中已经被污染的高亮标签
+   - 新保存的代码只保存纯代码，不保存高亮 HTML
+
+3. 修复 HTML 动画代码保存不稳定的问题。
+   - 添加“立即保存”按钮
+   - 切换标签、预览、回主页、导出前都会强制保存
+   - HTML 动画 textarea 单独同步保存，不再丢失
+
+## 文件结构
+
+所有文件在同一级目录，方便 GitHub 一次性上传：
 
 ```text
 index.html
@@ -26,31 +42,13 @@ README.md
 .gitignore
 ```
 
-没有 `src/`、`styles/`、`icons/` 多层文件夹，方便一次性全选上传。
-
-## 功能
-
-- 主页题库列表
-- 新建、编辑、删除代码题
-- 题目图片导入、拖拽导入、粘贴截图导入
-- 题目文字为空时，预览页不显示空占位
-- 题图在预览页占满宽度，清晰展示
-- 多方法代码管理
-- 每个方法支持备注
-- 每个方法支持 HTML 动画演示
-- 代码编辑器优先加载 Monaco Editor，接近 VSCode 体验
-- Monaco 加载失败时自动切换内置编辑器
-- IndexedDB 本地大容量存储
-- 题库 JSON 导入/导出
-- PWA，可在 Chrome 中安装为本地应用
-
-## GitHub 网页上传方法
+## 上传 GitHub
 
 1. 解压 ZIP。
 2. 打开解压后的文件夹。
 3. 全选里面所有文件。
 4. GitHub 仓库页面点击 `Add file -> Upload files`。
-5. 把所有文件拖进去。
+5. 拖入所有文件。
 6. 点击 `Commit changes`。
 
 ## Vercel 部署
@@ -61,18 +59,13 @@ README.md
 4. Output Directory 留空或填 `.`。
 5. Deploy。
 
-## 本地运行
+## 重要：安装过旧版 PWA 的处理
 
-直接双击 `index.html` 可以打开，但 PWA 和 Service Worker 更推荐通过 Vercel 或本地静态服务器访问。
+如果你之前已经在 Chrome 安装过旧版应用，部署 v4 后建议：
 
-本地服务器方式：
+1. 先删除旧的已安装应用。
+2. 打开新的 Vercel 链接。
+3. 刷新两次。
+4. 再重新点击 Chrome 地址栏安装。
 
-```bash
-python -m http.server 5173
-```
-
-然后浏览器打开：
-
-```text
-http://localhost:5173
-```
+旧版 PWA 的启动地址可能还停留在 `/index.html`，重新安装后会使用 v4 的 `./?source=pwa-v4`。

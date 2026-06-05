@@ -1,4 +1,4 @@
-import { $, $$, toast } from "./utils.js";
+import { $, $$, toast, stripHighlightMarkup } from "./utils.js";
 import { highlightCode } from "./highlight.js";
 
 const MONACO_CDN = "https://cdn.jsdelivr.net/npm/monaco-editor@0.49.0/min/vs";
@@ -82,6 +82,7 @@ export class CodeEditor {
       <div class="editor-shell">
         <div class="editor-tools">
           <button class="btn small" data-action="format">整理缩进</button>
+          <button class="btn small" data-action="clean">清洗代码</button>
           <button class="btn small" data-action="wrap">自动换行</button>
           <button class="btn small" data-action="fontMinus">A-</button>
           <button class="btn small" data-action="fontPlus">A+</button>
@@ -96,7 +97,11 @@ export class CodeEditor {
     `;
     this.box = $("#monacoBox", this.root);
     this.modeEl = $("#editorMode", this.root);
-    $("[data-action='format']", this.root).onclick = () => this.setValue(indentCode(this.getValue()));
+    $("[data-action='format']", this.root).onclick = () => this.setValue(indentCode(this.getValue()), true);
+    $("[data-action='clean']", this.root).onclick = () => {
+      this.setValue(stripHighlightMarkup(this.getValue()), true);
+      toast("已清洗旧高亮污染代码");
+    };
     $("[data-action='wrap']", this.root).onclick = () => this.toggleWrap();
     $("[data-action='fontMinus']", this.root).onclick = () => this.changeFont(-1);
     $("[data-action='fontPlus']", this.root).onclick = () => this.changeFont(1);
@@ -109,7 +114,7 @@ export class CodeEditor {
     try {
       this.monaco = await loadMonaco();
       this.editor = this.monaco.editor.create(this.box, {
-        value: this.value,
+        value: stripHighlightMarkup(this.value),
         language: langMap[this.language] || "cpp",
         theme: "vs",
         fontFamily: '"Cascadia Code","JetBrains Mono","SFMono-Regular","Consolas","Liberation Mono",monospace',
@@ -130,7 +135,7 @@ export class CodeEditor {
         parameterHints: { enabled: true }
       });
       this.editor.onDidChangeModelContent(() => {
-        this.value = this.editor.getValue();
+        this.value = stripHighlightMarkup(this.editor.getValue());
         this.onChange(this.value);
       });
       this.editor.addAction({
@@ -167,9 +172,9 @@ export class CodeEditor {
       textarea: $(".code-input", this.box)
     };
     const ta = this.fallback.textarea;
-    ta.value = this.value;
+    ta.value = stripHighlightMarkup(this.value);
     ta.addEventListener("input", () => {
-      this.value = ta.value;
+      this.value = stripHighlightMarkup(ta.value);
       this.updateFallback();
       this.onChange(this.value);
     });
@@ -184,7 +189,7 @@ export class CodeEditor {
 
   updateFallback() {
     if (!this.fallback) return;
-    const value = this.fallback.textarea.value;
+    const value = stripHighlightMarkup(this.fallback.textarea.value);
     this.fallback.highlight.innerHTML = highlightCode(value, this.language);
     const count = Math.max(1, value.split("\n").length);
     this.fallback.gutter.textContent = Array.from({ length: count }, (_, i) => i + 1).join("\n");
@@ -250,18 +255,19 @@ export class CodeEditor {
   }
 
   getValue() {
-    if (this.editor) return this.editor.getValue();
-    if (this.fallback) return this.fallback.textarea.value;
-    return this.value;
+    if (this.editor) return stripHighlightMarkup(this.editor.getValue());
+    if (this.fallback) return stripHighlightMarkup(this.fallback.textarea.value);
+    return stripHighlightMarkup(this.value);
   }
 
-  setValue(value) {
-    this.value = value || "";
+  setValue(value, notify = false) {
+    this.value = stripHighlightMarkup(value || "");
     if (this.editor && this.editor.getValue() !== this.value) this.editor.setValue(this.value);
     if (this.fallback) {
       this.fallback.textarea.value = this.value;
       this.updateFallback();
     }
+    if (notify) this.onChange(this.value);
   }
 
   setLanguage(language) {
@@ -280,7 +286,12 @@ export class CodeEditor {
       return;
     }
     const ta = this.fallback?.textarea;
-    if (ta) ta.style.whiteSpace = ta.style.whiteSpace === "pre-wrap" ? "pre" : "pre-wrap";
+    const pre = this.fallback?.pre;
+    if (ta && pre) {
+      const next = ta.style.whiteSpace === "pre-wrap" ? "pre" : "pre-wrap";
+      ta.style.whiteSpace = next;
+      pre.style.whiteSpace = next;
+    }
   }
 
   changeFont(delta) {

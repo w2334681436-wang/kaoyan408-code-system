@@ -1,7 +1,7 @@
 import { normalizeProblem } from "./models.js";
 
 const DB_NAME = "kaoyan408-code-system-flat-db";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE = "problems";
 const FALLBACK_KEY = "kaoyan408-code-system-flat-fallback";
 

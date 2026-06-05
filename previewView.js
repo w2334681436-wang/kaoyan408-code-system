@@ -1,4 +1,4 @@
-import { escapeHtml, formatDate } from "./utils.js";
+import { escapeHtml, formatDate, stripHighlightMarkup } from "./utils.js";
 import { getActiveMethod } from "./models.js";
 import { highlightCode } from "./highlight.js";
 
@@ -47,13 +47,14 @@ export function renderPreview(container, problem) {
 }
 
 export function methodBlock(method) {
+  const cleanCode = stripHighlightMarkup(method.code || "");
   return `
     <div class="code-preview">
       <div class="code-preview-head">
         <span id="previewCodeTitle">${escapeHtml(method.name || "代码")}</span>
-        <span id="previewCodeInfo">${escapeHtml(method.language || "cpp")} · ${(method.code || "").split("\n").length} 行</span>
+        <span id="previewCodeInfo">${escapeHtml(method.language || "cpp")} · ${cleanCode.split("\n").length} 行</span>
       </div>
-      <pre><code id="previewCode">${highlightCode(method.code || "", method.language || "cpp")}</code></pre>
+      <pre><code id="previewCode">${highlightCode(cleanCode, method.language || "cpp")}</code></pre>
     </div>
   `;
 }

@@ -9,7 +9,7 @@ export function renderHome(container, state) {
   if (search.trim()) {
     const q = search.trim().toLowerCase();
     list = list.filter(p => {
-      const methods = (p.methods || []).map(m => `${m.name} ${m.language} ${m.code} ${m.note}`).join(" ");
+      const methods = (p.methods || []).map(m => `${m.name} ${m.language} ${m.code} ${m.note} ${m.htmlDemo}`).join(" ");
       const text = `${p.title} ${p.type} ${p.difficulty} ${(p.tags || []).join(" ")} ${p.questionText} ${methods}`.toLowerCase();
       return text.includes(q);
     });
@@ -36,7 +36,7 @@ export function renderHome(container, state) {
         </section>
 
         <div class="search-row">
-          <input id="searchInput" value="${escapeHtml(search)}" placeholder="搜索题目、标签、代码、备注..." />
+          <input id="searchInput" value="${escapeHtml(search)}" placeholder="搜索题目、标签、代码、备注、HTML动画..." />
           <select id="sortSelect">
             <option value="updatedDesc" ${sort === "updatedDesc" ? "selected" : ""}>最近更新</option>
             <option value="createdDesc" ${sort === "createdDesc" ? "selected" : ""}>最近创建</option>
@@ -48,7 +48,7 @@ export function renderHome(container, state) {
           </select>
         </div>
 
-        <p class="help">共 ${problems.length} 道题，当前显示 ${list.length} 道。</p>
+        <p class="help">共 ${problems.length} 道题，当前显示 ${list.length} 道。v4 已修复 PWA 启动、预览代码高亮污染、HTML 动画保存。</p>
 
         ${list.length ? `
           <div class="cards">

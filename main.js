@@ -1,4 +1,4 @@
-import { $, $$, now, uid, toast, fileToDataUrl, downloadText, safeJsonParse, copyText, showImage, closeImage, requestFullScreen } from "./utils.js";
+import { $, $$, now, uid, toast, fileToDataUrl, downloadText, safeJsonParse, copyText, showImage, closeImage, requestFullScreen, stripHighlightMarkup } from "./utils.js";
 import { initDB, getAllProblems, getProblem, saveProblem, deleteProblem, importProblems } from "./db.js";
 import { createProblem, createMethod, getActiveMethod, normalizeProblem } from "./models.js";
 import { renderHome } from "./homeView.js";
@@ -17,7 +17,7 @@ let state = {
   tag: "",
   editor: null,
   saveTimer: null,
-  silent: false
+  isSaving: false
 };
 
 function shell(content = "") {
@@ -28,7 +28,7 @@ function shell(content = "") {
           <div class="brand-logo">408</div>
           <div>
             考研408代码题系统
-            <small>扁平模块版 · GitHub/Vercel/PWA · IndexedDB 本地存储</small>
+            <small>v4 · GitHub/Vercel/PWA · 预览高亮修复 · HTML动画保存修复</small>
           </div>
         </div>
         <div class="top-actions">
@@ -67,9 +67,12 @@ async function openHome() {
   state.view = "home";
   state.current = null;
   state.editor = null;
+  document.onpaste = null;
+  document.onkeydown = null;
   shell();
   renderHome($("#viewRoot"), state);
   bindHomeEvents();
+  bindGlobalModals();
 }
 
 function bindHomeEvents() {
@@ -168,25 +171,27 @@ draw()
 }
 
 async function openEdit(id) {
+  await saveCurrentIfNeeded();
   const p = await getProblem(id);
   if (!p) return toast("题目不存在");
-  state.current = p;
+  state.current = normalizeProblem(p);
   state.view = "edit";
   shell();
   renderEdit($("#viewRoot"), state.current);
   bindEditEvents();
   initCodeEditor();
+  bindGlobalModals();
 }
 
 function initCodeEditor() {
   const method = getActiveMethod(state.current);
   state.editor = new CodeEditor($("#codeEditorRoot"), (_value, action) => {
     syncEditFormToState();
-    scheduleSave();
-    if (action === "save") saveCurrentIfNeeded();
+    if (action === "save") saveCurrentIfNeeded(true);
+    else scheduleSave();
   });
   state.editor.setLanguage(method.language);
-  state.editor.setValue(method.code || "");
+  state.editor.setValue(stripHighlightMarkup(method.code || ""));
 }
 
 function bindEditEvents() {
@@ -204,10 +209,15 @@ function bindEditEvents() {
       syncEditFormToState();
       scheduleSave();
     });
+    el.addEventListener("blur", () => saveCurrentIfNeeded());
   });
 
+  $("#manualSaveBtn").onclick = () => saveCurrentIfNeeded(true);
+
   $$(".tab-btn").forEach(btn => {
-    btn.onclick = () => {
+    btn.onclick = async () => {
+      syncEditFormToState();
+      await saveCurrentIfNeeded();
       $$(".tab-btn").forEach(b => b.classList.toggle("active", b === btn));
       $("#codePanel").classList.toggle("hide", btn.dataset.tab !== "code");
       $("#notePanel").classList.toggle("hide", btn.dataset.tab !== "note");
@@ -216,7 +226,7 @@ function bindEditEvents() {
   });
 
   $("#previewFromEditBtn").onclick = async () => {
-    await saveCurrentIfNeeded();
+    await saveCurrentIfNeeded(true);
     openPreview(state.current.id);
   };
   $("#addMethodBtn").onclick = () => addMethod();
@@ -227,7 +237,7 @@ function bindEditEvents() {
   $$(".method-item").forEach(item => {
     item.onclick = async () => {
       syncEditFormToState();
-      await saveCurrentIfNeeded();
+      await saveCurrentIfNeeded(true);
       state.current.activeMethodId = item.dataset.methodId;
       await saveProblem(state.current);
       openEdit(state.current.id);
@@ -273,15 +283,22 @@ function bindEditEvents() {
     if (state.view !== "edit") return;
     if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
       event.preventDefault();
-      saveCurrentIfNeeded().then(() => openPreview(state.current.id));
+      saveCurrentIfNeeded(true).then(() => openPreview(state.current.id));
     }
+  };
+
+  window.onbeforeunload = () => {
+    if (state.view === "edit") syncEditFormToState();
   };
 }
 
 function syncEditFormToState() {
   if (!state.current) return;
   const p = state.current;
-  p.title = $("#titleInput")?.value.trim() || "未命名代码题";
+  const titleInput = $("#titleInput");
+  if (!titleInput) return;
+
+  p.title = titleInput.value.trim() || "未命名代码题";
   p.type = $("#typeInput")?.value || "数据结构";
   p.difficulty = $("#difficultyInput")?.value || "中等";
   p.tags = ($("#tagsInput")?.value || "").split(/[,，]/).map(s => s.trim()).filter(Boolean);
@@ -289,9 +306,10 @@ function syncEditFormToState() {
   const m = getActiveMethod(p);
   m.name = $("#methodNameInput")?.value.trim() || "未命名方法";
   m.language = $("#languageInput")?.value || "cpp";
-  m.code = state.editor?.getValue() ?? m.code ?? "";
+  m.code = stripHighlightMarkup(state.editor?.getValue() ?? m.code ?? "");
   m.note = $("#noteInput")?.value || "";
-  m.htmlDemo = $("#htmlDemoInput")?.value || "";
+  const htmlTextarea = $("#htmlDemoInput");
+  if (htmlTextarea) m.htmlDemo = htmlTextarea.value;
   p.updatedAt = now();
 }
 
@@ -299,16 +317,23 @@ function scheduleSave() {
   clearTimeout(state.saveTimer);
   const status = $("#saveStatus");
   if (status) status.textContent = "保存中...";
-  state.saveTimer = setTimeout(saveCurrentIfNeeded, 600);
+  state.saveTimer = setTimeout(() => saveCurrentIfNeeded(), 500);
 }
 
-async function saveCurrentIfNeeded() {
-  if (!state.current) return;
-  syncEditFormToState();
+async function saveCurrentIfNeeded(show = false) {
+  if (!state.current || state.isSaving) return;
+  const canSync = state.view === "edit" && $("#titleInput");
+  if (canSync) syncEditFormToState();
   normalizeProblem(state.current);
-  await saveProblem(state.current);
-  const status = $("#saveStatus");
-  if (status) status.textContent = "已保存 " + new Date().toLocaleTimeString("zh-CN", { hour12: false });
+  state.isSaving = true;
+  try {
+    await saveProblem(state.current);
+    const status = $("#saveStatus");
+    if (status) status.textContent = "已保存 " + new Date().toLocaleTimeString("zh-CN", { hour12: false });
+    if (show) toast("已保存");
+  } finally {
+    state.isSaving = false;
+  }
 }
 
 async function addImages(fileList) {
@@ -329,7 +354,7 @@ async function addImages(fileList) {
 }
 
 async function addMethod() {
-  await saveCurrentIfNeeded();
+  await saveCurrentIfNeeded(true);
   const method = createMethod(`方法${state.current.methods.length + 1}`);
   state.current.methods.push(method);
   state.current.activeMethodId = method.id;
@@ -338,7 +363,7 @@ async function addMethod() {
 }
 
 async function duplicateMethod() {
-  await saveCurrentIfNeeded();
+  await saveCurrentIfNeeded(true);
   const old = getActiveMethod(state.current);
   const copy = structuredClone(old);
   copy.id = uid();
@@ -368,14 +393,19 @@ async function removeCurrentProblem() {
 }
 
 async function openPreview(id) {
-  await saveCurrentIfNeeded();
+  await saveCurrentIfNeeded(true);
   const p = await getProblem(id);
   if (!p) return toast("题目不存在");
-  state.current = p;
+  state.current = normalizeProblem(p);
+  // 读出来后立刻保存一次，自动清洗旧 span 污染代码。
+  await saveProblem(state.current);
   state.view = "preview";
+  document.onpaste = null;
+  document.onkeydown = null;
   shell();
   renderPreview($("#viewRoot"), state.current);
   bindPreviewEvents();
+  bindGlobalModals();
 }
 
 function bindPreviewEvents() {
@@ -386,7 +416,7 @@ function bindPreviewEvents() {
   $("#toggleNoteBtn").onclick = () => $("#notePreview").classList.toggle("hide");
   $("#runDemoBtn").onclick = () => runDemo();
   $("#copyCodeBtn").onclick = async () => {
-    await copyText(getActiveMethod(state.current).code || "");
+    await copyText(stripHighlightMarkup(getActiveMethod(state.current).code || ""));
     toast("已复制代码");
   };
   $("#fullscreenBtn").onclick = () => requestFullScreen($("#previewFullTarget"));
@@ -405,11 +435,11 @@ function runDemo() {
 }
 
 async function exportAll() {
-  await saveCurrentIfNeeded();
+  await saveCurrentIfNeeded(true);
   await loadProblems();
   downloadText(
     `考研408代码题库_${new Date().toISOString().slice(0, 10)}.json`,
-    JSON.stringify({ version: 1, exportedAt: now(), problems: state.problems }, null, 2)
+    JSON.stringify({ version: 4, exportedAt: now(), problems: state.problems }, null, 2)
   );
   toast("已导出题库");
 }
@@ -427,27 +457,46 @@ async function importFile(file) {
 }
 
 function bindGlobalModals() {
-  $("#closeImageModal").onclick = closeImage;
-  $("#imageModal").onclick = event => {
-    if (event.target.id === "imageModal") closeImage();
-  };
-  $("#closeDemoModal").onclick = () => {
-    $("#demoModal").classList.remove("open");
-    $("#demoFrame").srcdoc = "";
-  };
-  $("#demoModal").onclick = event => {
-    if (event.target.id === "demoModal") $("#closeDemoModal").click();
-  };
-  $("#demoFullscreenBtn").onclick = () => requestFullScreen($("#demoFrame"));
+  const closeImageButton = $("#closeImageModal");
+  if (closeImageButton) closeImageButton.onclick = closeImage;
+  const imageModal = $("#imageModal");
+  if (imageModal) {
+    imageModal.onclick = event => {
+      if (event.target.id === "imageModal") closeImage();
+    };
+  }
+  const closeDemoButton = $("#closeDemoModal");
+  if (closeDemoButton) {
+    closeDemoButton.onclick = () => {
+      $("#demoModal").classList.remove("open");
+      $("#demoFrame").srcdoc = "";
+    };
+  }
+  const demoModal = $("#demoModal");
+  if (demoModal) {
+    demoModal.onclick = event => {
+      if (event.target.id === "demoModal") $("#closeDemoModal").click();
+    };
+  }
+  const demoFullscreenButton = $("#demoFullscreenBtn");
+  if (demoFullscreenButton) demoFullscreenButton.onclick = () => requestFullScreen($("#demoFrame"));
 }
 
 async function start() {
   shell(`<main class="main"><p class="muted">正在加载...</p></main>`);
   bindGlobalModals();
   await initDB();
+
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("./service-worker.js").catch(console.warn);
+    try {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      for (const reg of regs) await reg.update();
+      await navigator.serviceWorker.register("./service-worker.js?v=4", { scope: "./" });
+    } catch (error) {
+      console.warn("Service Worker 注册失败", error);
+    }
   }
+
   await openHome();
   bindGlobalModals();
 }

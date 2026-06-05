@@ -93,6 +93,7 @@ export function renderEdit(container, problem) {
                 ["cpp","C/C++"],["c","C"],["python","Python"],["java","Java"],["js","JavaScript"],["pseudo","伪代码"]
               ].map(([value, label]) => `<option value="${value}" ${method.language === value ? "selected" : ""}>${label}</option>`).join("")}
             </select>
+            <button class="btn small primary" id="manualSaveBtn">立即保存</button>
             <button class="btn small" id="duplicateMethodBtn">复制方法</button>
             <button class="btn small danger" id="deleteMethodBtn">删方法</button>
             <div class="editor-tabs">
@@ -108,7 +109,7 @@ export function renderEdit(container, problem) {
             <textarea id="noteInput" class="note-editor" placeholder="写本方法的思路、易错点、时间复杂度、考场注意事项。">${escapeHtml(method.note || "")}</textarea>
           </div>
           <div id="htmlPanel" class="tab-panel hide">
-            <textarea id="htmlDemoInput" class="html-editor" placeholder="给当前方法添加 HTML 动画演示代码，预览页可运行。">${escapeHtml(method.htmlDemo || "")}</textarea>
+            <textarea id="htmlDemoInput" class="html-editor" spellcheck="false" placeholder="给当前方法添加 HTML 动画演示代码，预览页可运行。">${escapeHtml(method.htmlDemo || "")}</textarea>
           </div>
         </section>
       </div>

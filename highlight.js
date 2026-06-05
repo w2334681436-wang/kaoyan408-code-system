@@ -1,6 +1,7 @@
-import { escapeHtml } from "./utils.js";
+import { escapeHtml, stripHighlightMarkup } from "./utils.js";
 
 export function highlightCode(code, lang = "cpp") {
+  const clean = stripHighlightMarkup(code);
   const placeholders = [];
   const stash = (className, text) => {
     const key = `@@PLACEHOLDER_${placeholders.length}@@`;
@@ -8,7 +9,7 @@ export function highlightCode(code, lang = "cpp") {
     return key;
   };
 
-  let s = String(code ?? "");
+  let s = String(clean ?? "");
   s = s.replace(/\/\*[\s\S]*?\*\//g, m => stash("tok-comment", m));
   s = s.replace(/\/\/.*$/gm, m => stash("tok-comment", m));
   if (["python", "py"].includes(lang)) s = s.replace(/#.*$/gm, m => stash("tok-comment", m));
@@ -39,8 +40,4 @@ export function highlightCode(code, lang = "cpp") {
     s = s.replaceAll(`@@PLACEHOLDER_${i}@@`, html);
   });
   return s || "";
-}
-
-export function plainTextFromCode(code) {
-  return String(code ?? "");
 }

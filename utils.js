@@ -16,6 +16,34 @@ export function escapeHtml(value) {
   }[ch]));
 }
 
+export function decodeHtmlEntities(text) {
+  const textarea = document.createElement("textarea");
+  textarea.innerHTML = String(text ?? "");
+  return textarea.value;
+}
+
+export function stripHighlightMarkup(code) {
+  let s = String(code ?? "");
+  if (!s) return "";
+
+  // 修复旧版本把 <span class="tok-xxx"> 当成代码保存进去的问题。
+  // 兼容两类污染：
+  // 1. <span class="tok-type">int</span>
+  // 2. &lt;span class="tok-type"&gt;int&lt;/span&gt;
+  if (s.includes("&lt;span") || s.includes("&amp;lt;span") || s.includes("<span class=\"tok-")) {
+    for (let i = 0; i < 3; i++) s = decodeHtmlEntities(s);
+    s = s.replace(/<span\s+class=["']tok-[^"']+["']\s*>/g, "");
+    s = s.replace(/<\/span>/g, "");
+    s = s.replace(/<span[^>]*>/g, "");
+    s = s.replace(/<\/span>/g, "");
+    s = decodeHtmlEntities(s);
+  }
+
+  // 清理旧高亮可能产生的 HTML 残留，但不碰正常 C/C++ 小于号。
+  s = s.replace(/\r\n/g, "\n");
+  return s;
+}
+
 export function formatDate(iso) {
   if (!iso) return "";
   return new Date(iso).toLocaleString("zh-CN", { hour12: false });
@@ -65,9 +93,7 @@ export function safeJsonParse(text) {
 }
 
 export function copyText(text) {
-  if (navigator.clipboard) {
-    return navigator.clipboard.writeText(text);
-  }
+  if (navigator.clipboard) return navigator.clipboard.writeText(text);
   const ta = document.createElement("textarea");
   ta.value = text;
   document.body.appendChild(ta);
@@ -88,9 +114,6 @@ export function closeImage() {
 }
 
 export function requestFullScreen(el) {
-  if (document.fullscreenElement) {
-    document.exitFullscreen();
-  } else {
-    el?.requestFullscreen?.();
-  }
+  if (document.fullscreenElement) document.exitFullscreen();
+  else el?.requestFullscreen?.();
 }
