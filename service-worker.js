@@ -1,44 +1,43 @@
-const APP_VERSION = '20260602-1735-scrollsync';
-const SW_VERSION = new URL(self.location.href).searchParams.get('v') || APP_VERSION;
-const CACHE_NAME = `11408-notes-cache-${SW_VERSION}`;
+const CACHE_NAME = "kaoyan408-code-system-flat-v1";
+const CORE = [
+  "./",
+  "./index.html",
+  "./styles.css",
+  "./main.js",
+  "./utils.js",
+  "./models.js",
+  "./db.js",
+  "./highlight.js",
+  "./codeEditor.js",
+  "./homeView.js",
+  "./editView.js",
+  "./previewView.js",
+  "./manifest.json",
+  "./icon.svg"
+];
 
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
-});
-
-self.addEventListener('install', (event) => {
+self.addEventListener("install", event => {
+  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(CORE)));
   self.skipWaiting();
 });
 
-self.addEventListener('activate', (event) => {
+self.addEventListener("activate", event => {
   event.waitUntil(
-    caches.keys()
-      .then((keys) => Promise.all(
-        keys
-          .filter((key) => key.startsWith('11408-notes-cache-') && key !== CACHE_NAME)
-          .map((key) => caches.delete(key))
-      ))
-      .then(() => self.clients.claim())
+    caches.keys().then(keys => Promise.all(keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))))
   );
+  self.clients.claim();
 });
 
-async function networkFirst(request) {
-  const cache = await caches.open(CACHE_NAME);
-  try {
-    const response = await fetch(request, { cache: 'no-store' });
-    if (response && response.ok) cache.put(request, response.clone()).catch(() => {});
-    return response;
-  } catch (error) {
-    const cached = await cache.match(request, { ignoreSearch: true });
-    if (cached) return cached;
-    if (request.mode === 'navigate') return cache.match('./index.html', { ignoreSearch: true });
-    throw error;
-  }
-}
-
-self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') return;
-  const url = new URL(event.request.url);
-  if (url.origin !== self.location.origin) return;
-  event.respondWith(networkFirst(event.request));
+self.addEventListener("fetch", event => {
+  if (event.request.method !== "GET") return;
+  event.respondWith(
+    caches.match(event.request).then(cached => {
+      if (cached) return cached;
+      return fetch(event.request).then(response => {
+        const copy = response.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy)).catch(() => {});
+        return response;
+      });
+    })
+  );
 });

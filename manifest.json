@@ -1,16 +1,15 @@
 {
-  "name": "11408 考研笔记框架系统",
-  "short_name": "11408笔记",
-  "description": "11408 考研笔记框架系统：Markdown、公式、HTML渲染、图片资源、IndexedDB、本地导入导出。",
+  "name": "考研408代码题系统",
+  "short_name": "408代码题",
+  "description": "考研408代码题题库、代码编辑、题图保存、HTML动画演示",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#f6f8fb",
+  "background_color": "#ffffff",
   "theme_color": "#2563eb",
-  "orientation": "any",
   "icons": [
     {
-      "src": "./icons/icon.svg",
+      "src": "./icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"

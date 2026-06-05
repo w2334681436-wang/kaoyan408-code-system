@@ -1,93 +1,78 @@
-# 考研 408 代码题系统
+# 考研408代码题系统
 
-这是一个多模块纯前端 PWA 应用，适合上传 GitHub 后用 Vercel 部署，也可以在 Chrome 中安装为本地应用。
+这是一个适合 GitHub + Vercel 部署的扁平模块版 PWA 应用。
+
+## 目录特点
+
+本版本为了方便 GitHub 网页上传，所有核心文件都在同一级根目录：
+
+```text
+index.html
+styles.css
+main.js
+utils.js
+models.js
+db.js
+highlight.js
+codeEditor.js
+homeView.js
+editView.js
+previewView.js
+manifest.json
+service-worker.js
+vercel.json
+icon.svg
+README.md
+.gitignore
+```
+
+没有 `src/`、`styles/`、`icons/` 多层文件夹，方便一次性全选上传。
 
 ## 功能
 
 - 主页题库列表
-- 新建、编辑、删除、搜索、筛选题目
+- 新建、编辑、删除代码题
 - 题目图片导入、拖拽导入、粘贴截图导入
-- 题目图片预览页自动大图展示
+- 题目文字为空时，预览页不显示空占位
+- 题图在预览页占满宽度，清晰展示
 - 多方法代码管理
-- 方法备注
-- 每个方法可添加 HTML 动画演示
-- 预览页默认只显示题目和代码，备注/动画放在按钮里
-- Monaco Editor 代码编辑器，联网时接近 VSCode 体验
-- Monaco 加载失败时自动降级为内置编辑器
-- IndexedDB 本地大容量浏览器存储
+- 每个方法支持备注
+- 每个方法支持 HTML 动画演示
+- 代码编辑器优先加载 Monaco Editor，接近 VSCode 体验
+- Monaco 加载失败时自动切换内置编辑器
+- IndexedDB 本地大容量存储
 - 题库 JSON 导入/导出
-- PWA manifest + service worker，可用 Chrome 安装
+- PWA，可在 Chrome 中安装为本地应用
 
-## 目录结构
+## GitHub 网页上传方法
 
-```text
-.
-├── index.html
-├── package.json
-├── vercel.json
-├── sw.js
-├── public/
-│   ├── manifest.webmanifest
-│   └── icons/
-├── src/
-│   ├── main.js
-│   ├── db.js
-│   ├── models.js
-│   ├── state.js
-│   ├── utils.js
-│   ├── components/
-│   │   ├── codeEditor.js
-│   │   ├── highlight.js
-│   │   ├── modal.js
-│   │   └── toast.js
-│   ├── views/
-│   │   ├── shell.js
-│   │   ├── homeView.js
-│   │   ├── editorView.js
-│   │   └── previewView.js
-│   └── styles/
-│       ├── base.css
-│       ├── layout.css
-│       ├── editor.css
-│       ├── preview.css
-│       └── responsive.css
-└── scripts/
-    └── check.mjs
-```
+1. 解压 ZIP。
+2. 打开解压后的文件夹。
+3. 全选里面所有文件。
+4. GitHub 仓库页面点击 `Add file -> Upload files`。
+5. 把所有文件拖进去。
+6. 点击 `Commit changes`。
+
+## Vercel 部署
+
+1. Vercel 导入 GitHub 仓库。
+2. Framework Preset 选 `Other`。
+3. Build Command 留空。
+4. Output Directory 留空或填 `.`。
+5. Deploy。
 
 ## 本地运行
 
-最简单方式：直接用 VSCode Live Server 或任意静态服务器打开根目录。
+直接双击 `index.html` 可以打开，但 PWA 和 Service Worker 更推荐通过 Vercel 或本地静态服务器访问。
 
-也可以运行：
+本地服务器方式：
 
 ```bash
-npm run dev
+python -m http.server 5173
 ```
 
-如果没有安装依赖，`npx` 会自动拉取一个临时静态服务器。
+然后浏览器打开：
 
-## 上传 GitHub + Vercel
-
-1. 解压 zip。
-2. 将整个文件夹上传到 GitHub 仓库。
-3. Vercel 新建项目，导入该仓库。
-4. Framework Preset 选 `Other`。
-5. Build Command 留空。
-6. Output Directory 留空或填 `.`。
-7. 部署完成后，用 Chrome 打开 Vercel 链接。
-8. 地址栏右侧出现安装图标后，点击安装为本地应用。
-
-## 数据保存说明
-
-题目、图片、代码、备注、动画 HTML 默认保存在浏览器 IndexedDB 中。换浏览器、清缓存、换设备前，请先点击“导出题库”备份 JSON。
-
-## 维护建议
-
-- 改编辑器功能：`src/components/codeEditor.js`
-- 改题库数据结构：`src/models.js`
-- 改本地存储：`src/db.js`
-- 改主页：`src/views/homeView.js`
-- 改编写页：`src/views/editorView.js`
-- 改预览页：`src/views/previewView.js`
-- 改样式：`src/styles/`
+```text
+http://localhost:5173
+```

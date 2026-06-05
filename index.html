@@ -1,23 +1,46 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#2563eb" />
-  <meta name="description" content="考研408代码题系统：题库、图片、代码编辑、多方法、备注、HTML动画演示、本地大容量存储。" />
-  <link rel="manifest" href="./public/manifest.webmanifest" />
-  <link rel="icon" href="./public/icons/icon-192.png" />
-  <link rel="stylesheet" href="./src/styles/base.css" />
-  <link rel="stylesheet" href="./src/styles/layout.css" />
-  <link rel="stylesheet" href="./src/styles/editor.css" />
-  <link rel="stylesheet" href="./src/styles/preview.css" />
-  <link rel="stylesheet" href="./src/styles/responsive.css" />
   <title>考研408代码题系统</title>
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="icon" href="./icon.svg" />
+  <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
-  <div id="app" class="app-shell"></div>
-  <div id="toast-root" class="toast-root" aria-live="polite"></div>
-  <div id="modal-root"></div>
-  <script type="module" src="./src/main.js"></script>
+  <div id="app"></div>
+
+  <div class="modal" id="imageModal">
+    <div class="modal-card image-modal-card">
+      <div class="modal-head">
+        <strong>题目图片</strong>
+        <button class="btn small" id="closeImageModal">关闭</button>
+      </div>
+      <div class="modal-body image-modal-body">
+        <img id="imageModalImg" alt="题目图片" />
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="demoModal">
+    <div class="modal-card demo-modal-card">
+      <div class="modal-head">
+        <strong id="demoModalTitle">HTML 动画演示</strong>
+        <div class="row gap">
+          <button class="btn small" id="demoFullscreenBtn">全屏动画</button>
+          <button class="btn small" id="closeDemoModal">关闭</button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <iframe id="demoFrame" class="demo-frame" sandbox="allow-scripts allow-same-origin"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script type="module" src="./main.js"></script>
 </body>
 </html>
