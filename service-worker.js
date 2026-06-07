@@ -1,4 +1,4 @@
-const CACHE_NAME = "kaoyan408-restore-old-ui-auto-update-v5-button-layout-fix";
+const CACHE_NAME = "kaoyan408-title-status-v1";
 const CORE = ["./", "./index.html", "./manifest.json", "./icon.svg"];
 
 self.addEventListener("install", event => {
