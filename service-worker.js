@@ -1,4 +1,4 @@
-const CACHE_NAME = "kaoyan408-restore-old-ui-auto-update-v2";
+const CACHE_NAME = "kaoyan408-restore-old-ui-auto-update-v3-simplify";
 const CORE = ["./", "./index.html", "./manifest.json", "./icon.svg"];
 
 self.addEventListener("install", event => {
